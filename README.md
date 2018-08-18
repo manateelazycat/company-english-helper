@@ -1,7 +1,6 @@
 # What's this ?
 This is english helper extension that base on Emacs company-mode.
 
-Below is screenshot:
 <img src="./screenshot.png" width="400">
 
 # Install
