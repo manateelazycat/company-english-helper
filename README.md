@@ -1,3 +1,9 @@
+# What's this ?
+This is english helper extension that base on Emacs company-mode.
+
+Below is screenshot:
+<img src="./screenshot.png" width="400">
+
 # Install
 1. Copy file [company-english-helper.el](company-english-helper.el) and [company-english-helper-data.el](company-english-helper-data.el) to directory ~/elisp/
 
