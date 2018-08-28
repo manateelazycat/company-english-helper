@@ -6,8 +6,8 @@
 ;; Maintainer: Andy Stewart <lazycat.manatee@gmail.com>
 ;; Copyright (C) 2018, Andy Stewart, all rights reserved.
 ;; Created: 2018-07-06 23:22:22
-;; Version: 0.8
-;; Last-Updated: 2018-08-28 21:58:45
+;; Version: 1.0
+;; Last-Updated: 2018-08-28 22:17:36
 ;;           By: Andy Stewart
 ;; URL: http://www.emacswiki.org/emacs/download/company-english-helper.el
 ;; Keywords:
@@ -68,6 +68,7 @@
 ;;
 ;; 2018/08/27
 ;;      * Add fuzz search algorithm.
+;;      * Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
 ;;
 ;; 2018/08/10
 ;;      * Require `cl' avoid error "Symbol's function definition is void: remove-if-not".
@@ -103,15 +104,18 @@
 
 ;;; Code:
 
-(defvar company-en-words-candidate-max-width 30
+(defvar company-english-helper-candidate-max-width 30
   "The max width of candidates.
 Default is 30, it will occur candidate is not alignment if this value too small.")
 
-(defvar company-en-words-active-p nil
-  "The status of company-en-words plugins.
+(defvar company-english-helper-active-p nil
+  "The status of company-english-helper plugins.
 Default is disable.")
 
-(defun en-words-annotation (s)
+(defvar company-english-helper-match-group-size 10
+  "The max size of match group.")
+
+(defun english-helper-annotation (s)
   (let* ((translation (get-text-property 0 :initials s))
          (translation-format-string (replace-regexp-in-string "\\cc" "" translation))
          (max-translation-length (+ 1 (apply 'max (mapcar 'length company-candidates))))
@@ -119,42 +123,64 @@ Default is disable.")
          (translation-length (length translation))
          (translation-format-length (length translation-format-string))
          (blank-length (max 0 (- max-translation-length candidate-length)))
-         (dot-length (max 0 (- company-en-words-candidate-max-width (- translation-length translation-format-length)))))
+         (dot-length (max 0 (- company-english-helper-candidate-max-width (- translation-length translation-format-length)))))
     (format "%s" (concat (make-string blank-length ?\ )
                          translation
                          (make-string dot-length ?\．)))))
 
-(defun company-en-words (command &optional arg &rest ignored)
+(defun company-english-helper-search (command &optional arg &rest ignored)
   (interactive (list 'interactive))
   (cl-case command
-    (interactive (company-begin-backend 'company-en-words))
+    (interactive (company-begin-backend 'company-english-helper-search))
     (prefix (company-grab-symbol))
     (candidates
-     (remove-if-not
-      (lambda (c) (or (string-prefix-p (downcase arg) c)
-                  (string-suffix-p (downcase arg) c)
-                  (and (string-match-p "-" (downcase arg))
-                       (and (string-prefix-p (car (split-string (downcase arg) "-")) c)
-                            (string-suffix-p (cadr (split-string (downcase arg) "-")) c)
+     (progn
+       (setq prefix-match-candidates
+             (remove-if-not
+              (lambda (c)  (string-prefix-p (downcase arg) c))
+              english-helper-completions))
+
+       (setq suffix-match-candidates
+             (remove-if-not
+              (lambda (c)  (string-suffix-p (downcase arg) c))
+              english-helper-completions))
+
+       (setq fuzz-match-candidates
+             (remove-if-not
+              (lambda (c)
+                (and (string-match-p "-" (downcase arg))
+                     (let* ((split-list (split-string (downcase arg) "-"))
+                            (left-string (car split-list))
+                            (right-string (cadr split-list)))
+                       (and (string-prefix-p left-string c)
+                            (string-match-p right-string (string-remove-prefix left-string c))
                             ))))
-      en-words-completions))
-    (annotation (en-words-annotation arg))
+              english-helper-completions))
+
+       ;; Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
+       (delete-dups (append
+                     (subseq prefix-match-candidates 0 (min company-english-helper-match-group-size (length prefix-match-candidates)))
+                     (subseq suffix-match-candidates 0 (min company-english-helper-match-group-size (length suffix-match-candidates)))
+                     (subseq fuzz-match-candidates 0 (min company-english-helper-match-group-size (length fuzz-match-candidates)))
+                     ))
+       ))
+    (annotation (english-helper-annotation arg))
     (sorted t)
     ))
 
 (defun toggle-company-english-helper ()
   "Toggle company english helper."
   (interactive)
-  (if company-en-words-active-p
+  (if company-english-helper-active-p
       (progn
-        (setq company-backends (remove 'company-en-words company-backends))
-        ;; I need remove `company-en-words' with `company-yasnippet',
-        ;; it's not enough just remove `company-en-words' from `company-backends'
-        (setq company-backends (remove '(company-en-words :with company-yasnippet) company-backends))
-        (setq company-en-words-active-p nil)
+        (setq company-backends (remove 'company-english-helper-search company-backends))
+        ;; I need remove `company-english-helper-search' with `company-yasnippet',
+        ;; it's not enough just remove `company-english-helper-search' from `company-backends'
+        (setq company-backends (remove '(company-english-helper-search :with company-yasnippet) company-backends))
+        (setq company-english-helper-active-p nil)
         (message "English helper has disable."))
-    (add-to-list 'company-backends 'company-en-words)
-    (setq company-en-words-active-p t)
+    (add-to-list 'company-backends 'company-english-helper-search)
+    (setq company-english-helper-active-p t)
     (message "English helper has enable.")))
 
 (provide 'company-english-helper)
