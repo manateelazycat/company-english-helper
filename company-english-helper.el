@@ -6,8 +6,8 @@
 ;; Maintainer: Andy Stewart <lazycat.manatee@gmail.com>
 ;; Copyright (C) 2018, Andy Stewart, all rights reserved.
 ;; Created: 2018-07-06 23:22:22
-;; Version: 0.7
-;; Last-Updated: 2018-08-10 12:39:24
+;; Version: 0.8
+;; Last-Updated: 2018-08-28 21:58:45
 ;;           By: Andy Stewart
 ;; URL: http://www.emacswiki.org/emacs/download/company-english-helper.el
 ;; Keywords:
@@ -65,6 +65,9 @@
 ;;
 
 ;;; Change log:
+;;
+;; 2018/08/27
+;;      * Add fuzz search algorithm.
 ;;
 ;; 2018/08/10
 ;;      * Require `cl' avoid error "Symbol's function definition is void: remove-if-not".
@@ -128,11 +131,15 @@ Default is disable.")
     (prefix (company-grab-symbol))
     (candidates
      (remove-if-not
-      (lambda (c) (string-prefix-p (downcase arg) c))
+      (lambda (c) (or (string-prefix-p (downcase arg) c)
+                  (string-suffix-p (downcase arg) c)
+                  (and (string-match-p "-" (downcase arg))
+                       (and (string-prefix-p (car (split-string (downcase arg) "-")) c)
+                            (string-suffix-p (cadr (split-string (downcase arg) "-")) c)
+                            ))))
       en-words-completions))
     (annotation (en-words-annotation arg))
     (sorted t)
-    (ignore-case 'keep-prefix)
     ))
 
 (defun toggle-company-english-helper ()
