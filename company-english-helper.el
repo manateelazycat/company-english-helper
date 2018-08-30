@@ -6,8 +6,8 @@
 ;; Maintainer: Andy Stewart <lazycat.manatee@gmail.com>
 ;; Copyright (C) 2018, Andy Stewart, all rights reserved.
 ;; Created: 2018-07-06 23:22:22
-;; Version: 1.0
-;; Last-Updated: 2018-08-28 22:17:36
+;; Version: 1.1
+;; Last-Updated: 2018-08-30 13:26:02
 ;;           By: Andy Stewart
 ;; URL: http://www.emacswiki.org/emacs/download/company-english-helper.el
 ;; Keywords:
@@ -55,6 +55,10 @@
 ;;
 ;; And bind your key with function `toggle-company-english-helper'.
 ;;
+;; If your computer's performance is good enough, you can enable fuzz search by:
+;;
+;; (setq company-english-helper-fuzz-search-p t)
+;;
 
 ;;; Customize:
 ;;
@@ -65,6 +69,9 @@
 ;;
 
 ;;; Change log:
+;;
+;; 2018/08/29
+;;      * Add option `company-english-helper-fuzz-search-p' and turn off it default.
 ;;
 ;; 2018/08/27
 ;;      * Add fuzz search algorithm.
@@ -115,6 +122,12 @@ Default is disable.")
 (defvar company-english-helper-match-group-size 10
   "The max size of match group.")
 
+(defvar company-english-helper-fuzz-search-p nil
+  "Turn on this option to enable fuzz search.
+Default is disable because fuzz search performance.
+
+If your computer's performance is good enough, you can enable this option.")
+
 (defun english-helper-annotation (s)
   (let* ((translation (get-text-property 0 :initials s))
          (translation-format-string (replace-regexp-in-string "\\cc" "" translation))
@@ -141,21 +154,25 @@ Default is disable.")
               english-helper-completions))
 
        (setq suffix-match-candidates
-             (remove-if-not
-              (lambda (c)  (string-suffix-p (downcase arg) c))
-              english-helper-completions))
+             (if company-english-helper-fuzz-search-p
+                 (remove-if-not
+                  (lambda (c)  (string-suffix-p (downcase arg) c))
+                  english-helper-completions)
+               nil))
 
        (setq fuzz-match-candidates
-             (remove-if-not
-              (lambda (c)
-                (and (string-match-p "-" (downcase arg))
-                     (let* ((split-list (split-string (downcase arg) "-"))
-                            (left-string (car split-list))
-                            (right-string (cadr split-list)))
-                       (and (string-prefix-p left-string c)
-                            (string-match-p right-string (string-remove-prefix left-string c))
-                            ))))
-              english-helper-completions))
+             (if company-english-helper-fuzz-search-p
+                 (remove-if-not
+                  (lambda (c)
+                    (and (string-match-p "-" (downcase arg))
+                         (let* ((split-list (split-string (downcase arg) "-"))
+                                (left-string (car split-list))
+                                (right-string (cadr split-list)))
+                           (and (string-prefix-p left-string c)
+                                (string-match-p right-string (string-remove-prefix left-string c))
+                                ))))
+                  english-helper-completions)
+               nil))
 
        ;; Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
        (delete-dups (append
