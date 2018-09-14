@@ -175,11 +175,17 @@ If your computer's performance is good enough, you can enable this option.")
                nil))
 
        ;; Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
-       (delete-dups (append
-                     (subseq prefix-match-candidates 0 (min company-english-helper-match-group-size (length prefix-match-candidates)))
-                     (subseq suffix-match-candidates 0 (min company-english-helper-match-group-size (length suffix-match-candidates)))
-                     (subseq fuzz-match-candidates 0 (min company-english-helper-match-group-size (length fuzz-match-candidates)))
-                     ))
+       (delete-dups (if fuzz-match-candidates
+                        (append
+                         (subseq prefix-match-candidates 0 (min company-english-helper-match-group-size (length prefix-match-candidates)))
+                         (subseq suffix-match-candidates 0 (min company-english-helper-match-group-size (length suffix-match-candidates)))
+                         (subseq fuzz-match-candidates 0 (min company-english-helper-match-group-size (length fuzz-match-candidates)))
+                         )
+                      (append
+                       prefix-match-candidates
+                       suffix-match-candidates
+                       fuzz-match-candidates
+                       )))
        ))
     (annotation (english-helper-annotation arg))
     (sorted t)
