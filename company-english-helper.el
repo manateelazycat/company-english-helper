@@ -6,8 +6,8 @@
 ;; Maintainer: Andy Stewart <lazycat.manatee@gmail.com>
 ;; Copyright (C) 2018, Andy Stewart, all rights reserved.
 ;; Created: 2018-07-06 23:22:22
-;; Version: 1.1
-;; Last-Updated: 2018-08-30 13:26:02
+;; Version: 1.2
+;; Last-Updated: 2018-12-01 23:35:13
 ;;           By: Andy Stewart
 ;; URL: http://www.emacswiki.org/emacs/download/company-english-helper.el
 ;; Keywords:
@@ -69,6 +69,9 @@
 ;;
 
 ;;; Change log:
+;;
+;; 2018/12/01
+;;      * Adjust the case of the completion word according to the string entered by the user.
 ;;
 ;; 2018/08/29
 ;;      * Add option `company-english-helper-fuzz-search-p' and turn off it default.
@@ -147,20 +150,17 @@ If your computer's performance is good enough, you can enable this option.")
     (interactive (company-begin-backend 'company-english-helper-search))
     (prefix (company-grab-symbol))
     (candidates
-     (progn
-       (setq prefix-match-candidates
+     (let* ((prefix-match-candidates
              (remove-if-not
               (lambda (c)  (string-prefix-p (downcase arg) c))
               english-helper-completions))
-
-       (setq suffix-match-candidates
+            (suffix-match-candidates
              (if company-english-helper-fuzz-search-p
                  (remove-if-not
                   (lambda (c)  (string-suffix-p (downcase arg) c))
                   english-helper-completions)
                nil))
-
-       (setq fuzz-match-candidates
+            (fuzz-match-candidates
              (if company-english-helper-fuzz-search-p
                  (remove-if-not
                   (lambda (c)
@@ -173,23 +173,39 @@ If your computer's performance is good enough, you can enable this option.")
                                 ))))
                   english-helper-completions)
                nil))
-
-       ;; Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
-       (delete-dups (if fuzz-match-candidates
-                        (append
-                         (subseq prefix-match-candidates 0 (min company-english-helper-match-group-size (length prefix-match-candidates)))
-                         (subseq suffix-match-candidates 0 (min company-english-helper-match-group-size (length suffix-match-candidates)))
-                         (subseq fuzz-match-candidates 0 (min company-english-helper-match-group-size (length fuzz-match-candidates)))
-                         )
-                      (append
-                       prefix-match-candidates
-                       suffix-match-candidates
-                       fuzz-match-candidates
-                       )))
+            (match-candidates
+             ;; Make prefix-match-candidates as first candidates, then suffix-match-candidates and fuzz-match-candidates.
+             (delete-dups (if fuzz-match-candidates
+                              (append
+                               (subseq prefix-match-candidates 0 (min company-english-helper-match-group-size (length prefix-match-candidates)))
+                               (subseq suffix-match-candidates 0 (min company-english-helper-match-group-size (length suffix-match-candidates)))
+                               (subseq fuzz-match-candidates 0 (min company-english-helper-match-group-size (length fuzz-match-candidates)))
+                               )
+                            (append
+                             prefix-match-candidates
+                             suffix-match-candidates
+                             fuzz-match-candidates
+                             )))))
+       (company-english-helper-convert-candidates arg match-candidates)
        ))
     (annotation (english-helper-annotation arg))
-    (sorted t)
-    ))
+    (sorted t)))
+
+(defun company-english-helper-convert-candidates (input candidates)
+  (cond ((company-english-helper-upcase-string-p input)
+         (mapcar 'upcase candidates))
+        ((company-english-helper-capitalize-string-p input)
+         (mapcar 'capitalize candidates))
+        (t candidates)))
+
+(defun company-english-helper-upcase-string-p (str)
+  (let ((case-fold-search nil))
+    (and (> (length str) 1)
+         (string-match-p "\\`[A-Z]*\\'" str))))
+
+(defun company-english-helper-capitalize-string-p (str)
+  (let ((case-fold-search nil))
+    (string-match-p "\\`[A-Z][a-z]*\\'" str)))
 
 (defun toggle-company-english-helper ()
   "Toggle company english helper."
