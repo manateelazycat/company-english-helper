@@ -219,6 +219,7 @@ If your computer's performance is good enough, you can enable this option.")
         (setq company-english-helper-active-p nil)
         (message "English helper has disable."))
     (add-to-list 'company-backends 'company-english-helper-search)
+    (company-mode t)
     (setq company-english-helper-active-p t)
     (message "English helper has enable.")))
 
