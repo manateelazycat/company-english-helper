@@ -216,10 +216,10 @@ If your computer's performance is good enough, you can enable this option.")
         ;; I need remove `company-english-helper-search' with `company-yasnippet',
         ;; it's not enough just remove `company-english-helper-search' from `company-backends'
         (setq company-backends (remove '(company-english-helper-search :with company-yasnippet) company-backends))
-        (setq company-english-helper-active-p nil)
         (message "English helper has disable."))
-    (add-to-list 'company-backends 'company-english-helper-search)
+        (setq company-english-helper-active-p nil)
     (company-mode t)
+    (add-to-list 'company-backends 'company-english-helper-search)
     (setq company-english-helper-active-p t)
     (message "English helper has enable.")))
 
