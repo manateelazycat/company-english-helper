@@ -70,6 +70,9 @@
 
 ;;; Change log:
 ;;
+;; 2023/02/19
+;;      * Change remove-if-not to cl-remove-if-not as cl is deprecated.
+;;
 ;; 2018/12/01
 ;;      * Adjust the case of the completion word according to the string entered by the user.
 ;;
@@ -107,7 +110,6 @@
 ;;
 
 ;;; Require
-(require 'cl)
 (require 'cl-lib)
 (require 'company)
 (require 'company-english-helper-data)
@@ -151,18 +153,18 @@ If your computer's performance is good enough, you can enable this option.")
     (prefix (company-grab-symbol))
     (candidates
      (let* ((prefix-match-candidates
-             (remove-if-not
+             (cl-remove-if-not
               (lambda (c)  (string-prefix-p (downcase arg) c))
               english-helper-completions))
             (suffix-match-candidates
              (if company-english-helper-fuzz-search-p
-                 (remove-if-not
+                 (cl-remove-if-not
                   (lambda (c)  (string-suffix-p (downcase arg) c))
                   english-helper-completions)
                nil))
             (fuzz-match-candidates
              (if company-english-helper-fuzz-search-p
-                 (remove-if-not
+                 (cl-remove-if-not
                   (lambda (c)
                     (and (string-match-p "-" (downcase arg))
                          (let* ((split-list (split-string (downcase arg) "-"))
